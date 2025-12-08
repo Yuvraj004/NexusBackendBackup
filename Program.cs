@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using NexusBackend.Data;
 using NexusBackend.Services;
+using Hangfire;
 
 namespace NexusBackend
 {
@@ -19,10 +20,21 @@ namespace NexusBackend
             // Register the Service
             builder.Services.AddScoped<ISeatService, SeatService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ISeatCleanupService, SeatCleanupService>();
 
             // 2. REGISTER EF CORE (The Connection)
             builder.Services.AddDbContext<NexusDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            //3. Add Hangfire Services
+            builder.Services.AddHangfire(configuration => configuration
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Add the Hangfire Server (The thing that actually runs the background jobs)
+            builder.Services.AddHangfireServer();
 
             var app = builder.Build();
 
@@ -37,6 +49,9 @@ namespace NexusBackend
 
             app.UseAuthorization();
 
+            // 2. Add Hangfire Dashboard (Optional but amazing for debugging)
+            // Access it at: https://localhost:7000/hangfire
+            app.UseHangfireDashboard();
 
             app.MapControllers();
 

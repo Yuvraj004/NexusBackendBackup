@@ -2,16 +2,19 @@
 using NexusBackend.Data;
 using NexusBackend.DTOs;
 using NexusBackend.Entities;
+using Hangfire;
 
 namespace NexusBackend.Services;
 
 public class SeatService : ISeatService
 {
     private readonly NexusDbContext _context;
+    private readonly IBackgroundJobClient _backgroundJobClient; // Inject Hangfire Client
 
-    public SeatService(NexusDbContext context)
+    public SeatService(NexusDbContext context, IBackgroundJobClient backgroundJobClient)
     {
         _context = context;
+        _backgroundJobClient = backgroundJobClient;
     }
 
     public async Task<List<SeatDto>> GetSeatsAsync(int eventId)
@@ -51,6 +54,9 @@ public class SeatService : ISeatService
             // 4. ATOMIC COMMIT: This is where the magic happens.
             // EF Core generates: UPDATE Seats SET ... WHERE Id=x AND RowVersion=oldVersion
             await _context.SaveChangesAsync();
+            _backgroundJobClient.Schedule<ISeatCleanupService>(
+                service => service.ReleaseSeatIfExpiredAsync(seat.Id),
+                TimeSpan.FromMinutes(5));
             return true; // Success!
         }
         catch (DbUpdateConcurrencyException)
