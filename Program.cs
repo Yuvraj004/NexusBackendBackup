@@ -18,6 +18,7 @@ namespace NexusBackend
 
             // Register the Service
             builder.Services.AddScoped<ISeatService, SeatService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             // 2. REGISTER EF CORE (The Connection)
             builder.Services.AddDbContext<NexusDbContext>(options =>
