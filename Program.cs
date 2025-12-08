@@ -21,6 +21,7 @@ namespace NexusBackend
             builder.Services.AddScoped<ISeatService, SeatService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ISeatCleanupService, SeatCleanupService>();
+            builder.Services.AddScoped<IEventService, EventService>();
 
             // 2. REGISTER EF CORE (The Connection)
             builder.Services.AddDbContext<NexusDbContext>(options =>
@@ -36,6 +37,19 @@ namespace NexusBackend
             // Add the Hangfire Server (The thing that actually runs the background jobs)
             builder.Services.AddHangfireServer();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngularApp", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                    //policy.WithOrigins("https://front-online-exam-portal.netlify.app")
+                    //.AllowAnyHeader()
+                    //.AllowAnyMethod();
+                });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -44,6 +58,7 @@ namespace NexusBackend
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseCors("AllowAngularApp");
 
             app.UseHttpsRedirection();
 
