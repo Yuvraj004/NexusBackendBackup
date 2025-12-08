@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using NexusBackend.Data;
+using NexusBackend.Services;
 
 namespace NexusBackend
 {
@@ -14,6 +15,9 @@ namespace NexusBackend
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Register the Service
+            builder.Services.AddScoped<ISeatService, SeatService>();
 
             // 2. REGISTER EF CORE (The Connection)
             builder.Services.AddDbContext<NexusDbContext>(options =>
